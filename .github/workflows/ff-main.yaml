@@ -1,0 +1,51 @@
+name: Fast Forward Main
+
+on:
+  workflow_dispatch:
+    inputs:
+      compareBranch:
+        description: 'Compare (i.e., source) branch'
+        required: true
+        default: 'main-ff'
+        type: choice
+        options:
+          - is-main
+          - main-ff
+          - no-main-ff
+
+jobs:
+  ff_to_main:
+    name: Fast forward main to source branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: tree:0
+      - name: Report on branch statuses
+        run: |
+          git checkout $COMPARE_BRANCH
+          echo "\`$BASE_BRANCH\` is at $(git rev-parse --short $BASE_BRANCH)"
+          echo "\`$COMPARE_BRANCH\` is at $(git rev-parse --short $COMPARE_BRANCH)"
+          echo "Common ancestor: $(git rev-parse --short $(git merge-base $BASE_BRANCH $COMPARE_BRANCH))"
+          git checkout $BASE_BRANCH
+          git merge-base --is-ancestor $BASE_BRANCH $COMPARE_BRANCH
+          can_ff=$?
+          can_ff_str=$(if [ $can_ff -eq 0 ]; then echo "can"; else echo "cannot"; fi)
+          echo "\`$BASE_BRANCH\` $can_ff_str be fast-forwarded to \`$COMPARE_BRANCH\`"
+          exit $can_ff
+        env:
+          BASE_BRANCH: main
+          COMPARE_BRANCH: ${{ inputs.compareBranch }}
+      - name: Fast forward base branch
+        if: ${{ success() }}
+        run: |
+          git checkout $BASE_BRANCH
+          git merge --ff-only $COMPARE_BRANCH
+          git push origin $BASE_BRANCH
+        env:
+          BASE_BRANCH: main
+          COMPARE_BRANCH: ${{ inputs.compareBranch }}
