@@ -32,11 +32,9 @@ jobs:
           echo "\`$COMPARE_BRANCH\` is at $(git rev-parse --short $COMPARE_BRANCH)"
           echo "Common ancestor: $(git rev-parse --short $(git merge-base $BASE_BRANCH $COMPARE_BRANCH))"
           git checkout $BASE_BRANCH
+          can_ff=$(if $(git merge-base --is-ancestor $BASE_BRANCH $COMPARE_BRANCH); then echo "can"; else echo "cannot"; fi)
+          echo "\`$BASE_BRANCH\` $can_ff be fast-forwarded to \`$COMPARE_BRANCH\`"
           git merge-base --is-ancestor $BASE_BRANCH $COMPARE_BRANCH
-          can_ff=$?
-          can_ff_str=$(if [ $can_ff -eq 0 ]; then echo "can"; else echo "cannot"; fi)
-          echo "\`$BASE_BRANCH\` $can_ff_str be fast-forwarded to \`$COMPARE_BRANCH\`"
-          exit $can_ff
         env:
           BASE_BRANCH: main
           COMPARE_BRANCH: ${{ inputs.compareBranch }}
