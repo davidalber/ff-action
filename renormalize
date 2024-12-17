@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+git checkout is-main
+git reset --hard main
+git push origin is-main -f
+
+git checkout main-ff
+git reset --hard main
+echo 3 >> f
+git commit f -m "Add 3"
+git push origin main-ff -f
+
+git checkout no-main-ff
+git reset --hard $(git rev-list --max-parents=0 HEAD)
+echo 3 >> f
+git commit f -m "Add 3"
+git push origin no-main-ff -f
+
+git checkout main
